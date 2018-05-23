@@ -1,11 +1,10 @@
-__author__ = 'yjxiong'
-
 import os
 import glob
 import sys
 from pipes import quote
 from multiprocessing import Pool, current_process
-
+import subprocess
+import itertools
 import argparse
 out_path = ''
 
@@ -28,39 +27,53 @@ def dump_frames(vid_path):
         cv2.imwrite('{}/{:06d}.jpg'.format(out_full_path, i), frame)
         access_path = '{}/{:06d}.jpg'.format(vid_name, i)
         file_list.append(access_path)
-    print '{} done'.format(vid_name)
+    print 'dump_frames {} done'.format(vid_name)
     sys.stdout.flush()
     return file_list
 
+def run_optical_flow_unpack(args):
+    return run_optical_flow(*args)
 
-def run_optical_flow(vid_item, dev_id=0):
-    vid_path = vid_item[0]
-    vid_id = vid_item[1]
+def run_wrap_optical_flow_unpack(args):
+    return run_wrap_optical_flow_unpack(*args)
+
+def run_optical_flow(vid_path, vid_id, dev_id=0):
     vid_name = vid_path.split('/')[-1].split('.')[0]
     out_full_path = os.path.join(out_path, vid_name)
     try:
         os.mkdir(out_full_path)
     except OSError:
         pass
-
-    current = current_process()
-    dev_id = (int(current._identity[0]) - 1) % NUM_GPU
+    
+    if num_worker > 1:
+        current = current_process()
+        dev_id = (int(current._identity[0]) - 1) % NUM_GPU
     image_path = '{}/img'.format(out_full_path)
     flow_x_path = '{}/flow_x'.format(out_full_path)
     flow_y_path = '{}/flow_y'.format(out_full_path)
 
-    cmd = os.path.join(df_path + 'build/extract_gpu')+' -f {} -x {} -y {} -i {} -b 20 -t 1 -d {} -s 1 -o {} -w {} -h {}'.format(
-        quote(vid_path), quote(flow_x_path), quote(flow_y_path), quote(image_path), dev_id, out_format, new_size[0], new_size[1])
+    subprocess.call([os.path.join(df_path)+'build/extract_gpu',
+                     '-f', vid_path, 
+                     '-x', flow_x_path,
+                     '-y', flow_y_path,
+                     '-i', image_path,
+                     '-b', '20',
+                     '-t', '1',
+                     '-d', str(dev_id), 
+                     '-o', out_format, 
+                     '-w', str(new_size[0]), 
+                     '-h', str( new_size[1])])
 
-    os.system(cmd)
-    print '{} {} done'.format(vid_id, vid_name)
+    #cmd = os.path.join(df_path + 'build/extract_gpu')+' -f {} -x {} -y {} -i {} -b 20 -t 1 -d {} -s 1 -o {} -w {} -h {}'.format(
+    #    quote(vid_path), quote(flow_x_path), quote(flow_y_path), quote(image_path), dev_id, out_format, new_size[0], new_size[1])
+    #os.system(cmd)
+    
+    print 'Extracting flow: {} {} done'.format(str(vid_id).zfill(3), vid_name)
     sys.stdout.flush()
     return True
 
 
-def run_warp_optical_flow(vid_item, dev_id=0):
-    vid_path = vid_item[0]
-    vid_id = vid_item[1]
+def run_warp_optical_flow(vid_path, vid_id, dev_id=0):
     vid_name = vid_path.split('/')[-1].split('.')[0]
     out_full_path = os.path.join(out_path, vid_name)
     try:
@@ -94,7 +107,7 @@ if __name__ == '__main__':
     parser.add_argument("--ext", type=str, default='avi', choices=['avi','mp4'], help='video file extensions')
     parser.add_argument("--new_width", type=int, default=0, help='resize image width')
     parser.add_argument("--new_height", type=int, default=0, help='resize image height')
-    parser.add_argument("--num_gpu", type=int, default=8, help='number of GPU')
+    parser.add_argument("--num_gpu", type=int, default=2, help='number of GPU')
 
     args = parser.parse_args()
 
@@ -112,10 +125,13 @@ if __name__ == '__main__':
         print "creating folder: "+out_path
         os.makedirs(out_path)
 
-    vid_list = glob.glob(src_path+'/*/*.'+ext)
-    print len(vid_list)
+    vid_list = glob.glob(src_path+'/*.'+ext)
+    print 'found {} videos'.format(len(vid_list))
+    vid_id = xrange(len(vid_list))
+    vid_tuple = list(zip(vid_list, vid_id))
+
     pool = Pool(num_worker)
     if flow_type == 'tvl1':
-        pool.map(run_optical_flow, zip(vid_list, xrange(len(vid_list))))
+        pool.map(run_optical_flow_unpack, vid_tuple)
     elif flow_type == 'warp_tvl1':
-        pool.map(run_warp_optical_flow, zip(vid_list, xrange(len(vid_list))))
+        pool.map(run_warp_optical_flow_unpack, vid_tuple) 

@@ -5,3 +5,6 @@
 	path = lib/caffe-action
 	url = https://github.com/yjxiong/caffe
 	branch=action_recog
+[submodule "lib/py_dense_flow"]
+	path = lib/py_dense_flow
+	url = https://github.com/qijiezhao/py-denseflow.git

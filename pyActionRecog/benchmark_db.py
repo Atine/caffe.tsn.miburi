@@ -11,7 +11,6 @@ def parse_directory(path, rgb_prefix='img_', flow_x_prefix='flow_x_', flow_y_pre
     """
     print 'parse frames under folder {}'.format(path)
     frame_folders = glob.glob(os.path.join(path, '*'))
-
     def count_files(directory, prefix_list):
         lst = os.listdir(directory)
         cnt_list = [len(fnmatch.filter(lst, x+'*')) for x in prefix_list]
@@ -130,3 +129,22 @@ def parse_activitynet_splits(version):
     splits.append((train_list + val_list, test_list))
 
     return splits
+
+def parse_miburi_splits():
+
+    # split 
+    class_ind = [x.strip().split() for x in open('data/miburi_splits/classInd.txt')]
+    label_mapping = {x[1]:int(x[0]) for x in class_ind}
+
+    def line2rec(line):
+        items = line.strip().split('-')
+        label = label_mapping[items[0]]
+        vid = line.strip().split(' ')[0].split('.')[0]
+        return vid, label
+
+    splits = []
+    train_list = [line2rec(x) for x in open('data/miburi_splits/trainlist.txt')]
+    test_list = [line2rec(x) for x in open('data/miburi_splits/testlist.txt')]
+    splits.append((train_list, test_list))
+    return splits
+
