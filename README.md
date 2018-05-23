@@ -1,3 +1,63 @@
+# Adaptation of TSN with custom dataset, mostly the gen_list part
+
+### Install on CUDA 9.1 / cudnn 0.7.05
+After downloading OpenCV (2.4.13), need to edit the `cmake/FindCUDA.cmake`
+
+* comment the line `unset(CUDA_nppi_LIBRARY CACHE)` and add
+```text
+unset(CUDA_nppial_LIBRARY CACHE)
+unset(CUDA_nppicc_LIBRARY CACHE)
+unset(CUDA_nppicom_LIBRARY CACHE)
+unset(CUDA_nppidei_LIBRARY CACHE)
+unset(CUDA_nppif_LIBRARY CACHE)
+unset(CUDA_nppig_LIBRARY CACHE)
+unset(CUDA_nppim_LIBRARY CACHE)
+unset(CUDA_nppist_LIBRARY CACHE)
+unset(CUDA_nppisu_LIBRARY CACHE)
+unset(CUDA_nppitc_LIBRARY CACHE)
+```
+
+* comment the line `find_cud_helper_libs(nppi)` and add 
+```text
+find_cuda_helpber_libs(nppial)
+find_cuda_helpber_libs(nppicc)
+find_cuda_helpber_libs(nppicom)
+find_cuda_helpber_libs(nppidei)
+find_cuda_helpber_libs(nppif)
+find_cuda_helpber_libs(nppig)
+find_cuda_helpber_libs(nppim)
+find_cuda_helpber_libs(nppist)
+find_cuda_helpber_libs(nppisu)
+find_cuda_helpber_libs(nppitc)
+```
+
+* comment the line `set(CUDA_npp_LIBRARY "${CUDA_nppc_LIBRARY};${CUDA_nppi_LIBRARY};${CUDA_npps_LIBRARY}")` and add 
+```text
+set(CUDA_npp_LIBRARY "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppicom_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}")
+```
+
+After compiling OpenCV, when compiling `lib/denseflow`, you need to add some symbolic links:
+in `/usr/local/lib`:
+
+```text
+sudo ln -s /usr/local/cuda/lib64/libnppial.so libopencv_dep_nppial.so
+sudo ln -s /usr/local/cuda/lib64/libnppicc.so libopencv_dep_nppicc.so
+sudo ln -s /usr/local/cuda/lib64/libnppicom.so libopencv_dep_nppicom.so
+sudo ln -s /usr/local/cuda/lib64/libnppidei.so libopencv_dep_nppidei.so
+sudo ln -s /usr/local/cuda/lib64/libnppif.so libopencv_dep_nppif.so
+sudo ln -s /usr/local/cuda/lib64/libnppig.so libopencv_dep_nppig.so
+sudo ln -s /usr/local/cuda/lib64/libnppim.so libopencv_dep_nppim.so
+sudo ln -s /usr/local/cuda/lib64/libnppist.so libopencv_dep_nppist.so
+sudo ln -s /usr/local/cuda/lib64/libnppisu.so libopencv_dep_nppisu.so
+sudo ln -s /usr/local/cuda/lib64/libnppitc.so libopencv_dep_nppitc.so
+```
+
+Now you should be able to compile dense_flow!
+
+
+
+---------------------------------------------------------------------
+
 # Temporal Segment Networks (TSN)
 
 This repository holds the codes and models for the paper
@@ -12,11 +72,8 @@ Limin Wang, Yuanjun Xiong, Zhe Wang, Yu Qiao, Dahua Lin, Xiaoou Tang, and Luc Va
 ## News & Updates
 
 Sep. 8, 2017 - We released TSN models trained on the Kinetics dataset with 76.6% single model top-1 accuracy. Find the model weights and transfer learning experiment results on the [website][kinetics-action].
-
 Aug 10, 2017 - An experimental pytorch implementation of TSN is released [github][tsn-pytorch]
-
 Nov. 5, 2016 - The project page for TSN is online. [website][tsn_site]
-
 Sep. 14, 2016 - We fixed a legacy [bug][bug] in Caffe. Some parameters in TSN training are affected. 
 You are advised to update to the latest version.
 
