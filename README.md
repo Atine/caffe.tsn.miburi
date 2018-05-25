@@ -1,7 +1,9 @@
 # Adaptation of TSN with custom dataset, mostly the gen_list part
 
 ### Install on CUDA 9.1 / cudnn 0.7.05
-After downloading OpenCV (2.4.13), need to edit the `cmake/FindCUDA.cmake`
+After downloading OpenCV (2.4.13), need to 
+
+#### edit the `cmake/FindCUDA.cmake`
 
 * comment the line `unset(CUDA_nppi_LIBRARY CACHE)` and add
 ```text
@@ -17,18 +19,18 @@ unset(CUDA_nppisu_LIBRARY CACHE)
 unset(CUDA_nppitc_LIBRARY CACHE)
 ```
 
-* comment the line `find_cud_helper_libs(nppi)` and add 
+* comment the line `find_cuda_helper_libs(nppi)` and add 
 ```text
-find_cuda_helpber_libs(nppial)
-find_cuda_helpber_libs(nppicc)
-find_cuda_helpber_libs(nppicom)
-find_cuda_helpber_libs(nppidei)
-find_cuda_helpber_libs(nppif)
-find_cuda_helpber_libs(nppig)
-find_cuda_helpber_libs(nppim)
-find_cuda_helpber_libs(nppist)
-find_cuda_helpber_libs(nppisu)
-find_cuda_helpber_libs(nppitc)
+find_cuda_helper_libs(nppial)
+find_cuda_helper_libs(nppicc)
+find_cuda_helper_libs(nppicom)
+find_cuda_helper_libs(nppidei)
+find_cuda_helper_libs(nppif)
+find_cuda_helper_libs(nppig)
+find_cuda_helper_libs(nppim)
+find_cuda_helper_libs(nppist)
+find_cuda_helper_libs(nppisu)
+find_cuda_helper_libs(nppitc)
 ```
 
 * comment the line `set(CUDA_npp_LIBRARY "${CUDA_nppc_LIBRARY};${CUDA_nppi_LIBRARY};${CUDA_npps_LIBRARY}")` and add 
@@ -36,7 +38,25 @@ find_cuda_helpber_libs(nppitc)
 set(CUDA_npp_LIBRARY "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppicom_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}")
 ```
 
-After compiling OpenCV, when compiling `lib/denseflow`, you need to add some symbolic links:
+#### edit `cmake/OpenCVDetectCUDA.cmake`
+* comment the line `set(_generations "Fermi" "Kepler")` and add 
+```text
+set(_generations "Fermi" "Kepler" "Maxwell" "Pascal" "Volta")
+```
+
+* add after `elseif(CUDA_GENERATION STREQUAL "Kepler")`
+```text
+elseif(CUDA_GENERATION STREQUAL "Maxwell")
+  set(__cuda_arch_bin "5.0 5.2")
+elseif(CUDA_GENERATION STREQUAL "Pascal")
+  set(__cuda_arch_bin "6.0 6.1")
+elseif(CUDA_GENERATION STREQUAL "Volta")
+  set(__cuda_arch_bin "7.0")
+```
+for more advanced versions, please take a look at `https://github.com/opencv/opencv/blob/master/cmake/OpenCVDetectCUDA.cmake`
+
+
+#### After compiling OpenCV, when compiling `lib/dense_flow`, you need to add some symbolic links:
 in `/usr/local/lib`:
 
 ```text
